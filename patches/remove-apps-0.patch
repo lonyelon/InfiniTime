@@ -1,0 +1,19 @@
+diff --git a/src/displayapp/Apps.h b/src/displayapp/Apps.h
+index 89b05d87..068be9d1 100644
+--- a/src/displayapp/Apps.h
++++ b/src/displayapp/Apps.h
+@@ -16,14 +16,8 @@ namespace Pinetime {
+       FlashLight,
+       BatteryInfo,
+       Music,
+-      Paint,
+-      Paddle,
+-      Twos,
+       HeartRate,
+-      Navigation,
+       StopWatch,
+-      Metronome,
+-      Motion,
+       Steps,
+       Weather,
+       PassKey,
