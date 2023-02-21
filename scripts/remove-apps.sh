@@ -15,6 +15,4 @@ git rm src/displayapp/screens/Paddle.h
 git rm src/displayapp/screens/Twos.cpp
 git rm src/displayapp/screens/Twos.h
 
-git apply ../patches/remove-apps-0.patch
-git apply ../patches/remove-apps-1.patch
-git apply ../patches/remove-apps-2.patch
+git apply ../patches/remove-apps.patch

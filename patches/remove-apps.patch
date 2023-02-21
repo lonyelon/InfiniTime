@@ -1,3 +1,49 @@
+diff --git a/src/displayapp/Apps.h b/src/displayapp/Apps.h
+index 89b05d87..068be9d1 100644
+--- a/src/displayapp/Apps.h
++++ b/src/displayapp/Apps.h
+@@ -16,14 +16,8 @@ namespace Pinetime {
+       FlashLight,
+       BatteryInfo,
+       Music,
+-      Paint,
+-      Paddle,
+-      Twos,
+       HeartRate,
+-      Navigation,
+       StopWatch,
+-      Metronome,
+-      Motion,
+       Steps,
+       Weather,
+       PassKey,
+diff --git a/src/displayapp/screens/ApplicationList.h b/src/displayapp/screens/ApplicationList.h
+index e7c094bf..abc422c7 100644
+--- a/src/displayapp/screens/ApplicationList.h
++++ b/src/displayapp/screens/ApplicationList.h
+@@ -36,7 +36,7 @@ namespace Pinetime {
+         static constexpr int appsPerScreen = 6;
+ 
+         // Increment this when more space is needed
+-        static constexpr int nScreens = 2;
++        static constexpr int nScreens = 1;
+ 
+         static constexpr std::array<Tile::Applications, appsPerScreen * nScreens> applications {{
+           {Symbols::stopWatch, Apps::StopWatch},
+@@ -45,13 +45,6 @@ namespace Pinetime {
+           {Symbols::shoe, Apps::Steps},
+           {Symbols::heartBeat, Apps::HeartRate},
+           {Symbols::music, Apps::Music},
+-
+-          {Symbols::paintbrush, Apps::Paint},
+-          {Symbols::paddle, Apps::Paddle},
+-          {"2", Apps::Twos},
+-          {Symbols::chartLine, Apps::Motion},
+-          {Symbols::drum, Apps::Metronome},
+-          {Symbols::map, Apps::Navigation},
+         }};
+         ScreenList<nScreens> screens;
+       };
 diff --git a/src/displayapp/DisplayApp.cpp b/src/displayapp/DisplayApp.cpp
 index 108e380d..134e1ea7 100644
 --- a/src/displayapp/DisplayApp.cpp
