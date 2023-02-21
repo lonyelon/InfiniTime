@@ -1,0 +1,141 @@
+diff --git a/src/displayapp/screens/Timer.cpp b/src/displayapp/screens/Timer.cpp
+index 136d6b52..4b6665a6 100644
+--- a/src/displayapp/screens/Timer.cpp
++++ b/src/displayapp/screens/Timer.cpp
+@@ -19,16 +19,8 @@ static void btnEventHandler(lv_obj_t* obj, lv_event_t event) {
+ 
+ Timer::Timer(DisplayApp* app, Controllers::TimerController& timerController) : Screen(app), timerController {timerController} {
+ 
+-  lv_obj_t* colonLabel = lv_label_create(lv_scr_act(), nullptr);
+-  lv_obj_set_style_local_text_font(colonLabel, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &jetbrains_mono_76);
+-  lv_obj_set_style_local_text_color(colonLabel, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+-  lv_label_set_text_static(colonLabel, ":");
+-  lv_obj_align(colonLabel, lv_scr_act(), LV_ALIGN_CENTER, 0, -29);
+-
+-  minuteCounter.Create();
+   secondCounter.Create();
+-  lv_obj_align(minuteCounter.GetObject(), nullptr, LV_ALIGN_IN_TOP_LEFT, 0, 0);
+-  lv_obj_align(secondCounter.GetObject(), nullptr, LV_ALIGN_IN_TOP_RIGHT, 0, 0);
++  lv_obj_align(secondCounter.GetObject(), nullptr, LV_ALIGN_IN_TOP_LEFT, 0, 0);
+ 
+   highlightObjectMask = lv_objmask_create(lv_scr_act(), nullptr);
+   lv_obj_set_size(highlightObjectMask, 240, 50);
+@@ -105,8 +97,7 @@ void Timer::UpdateMask() {
+ void Timer::Refresh() {
+   if (timerController.IsRunning()) {
+     uint32_t seconds = timerController.GetTimeRemaining() / 1000;
+-    minuteCounter.SetValue(seconds / 60);
+-    secondCounter.SetValue(seconds % 60);
++    secondCounter.SetValue(seconds);
+   } else if (buttonPressing && xTaskGetTickCount() > pressTime + pdMS_TO_TICKS(150)) {
+     lv_label_set_text_static(txtPlayPause, "Reset");
+     maskPosition += 15;
+@@ -120,13 +111,11 @@ void Timer::Refresh() {
+ }
+ 
+ void Timer::SetTimerRunning() {
+-  minuteCounter.HideControls();
+   secondCounter.HideControls();
+   lv_label_set_text_static(txtPlayPause, "Pause");
+ }
+ 
+ void Timer::SetTimerStopped() {
+-  minuteCounter.ShowControls();
+   secondCounter.ShowControls();
+   lv_label_set_text_static(txtPlayPause, "Start");
+ }
+@@ -134,19 +123,17 @@ void Timer::SetTimerStopped() {
+ void Timer::ToggleRunning() {
+   if (timerController.IsRunning()) {
+     uint32_t seconds = timerController.GetTimeRemaining() / 1000;
+-    minuteCounter.SetValue(seconds / 60);
+-    secondCounter.SetValue(seconds % 60);
++    secondCounter.SetValue(seconds);
+     timerController.StopTimer();
+     SetTimerStopped();
+-  } else if (secondCounter.GetValue() + minuteCounter.GetValue() > 0) {
+-    timerController.StartTimer((secondCounter.GetValue() + minuteCounter.GetValue() * 60) * 1000);
++  } else if (secondCounter.GetValue() > 0) {
++    timerController.StartTimer(secondCounter.GetValue() * 1000);
+     Refresh();
+     SetTimerRunning();
+   }
+ }
+ 
+ void Timer::Reset() {
+-  minuteCounter.SetValue(0);
+   secondCounter.SetValue(0);
+   SetTimerStopped();
+ }
+diff --git a/src/displayapp/screens/Timer.h b/src/displayapp/screens/Timer.h
+index a6b60a17..3834e76c 100644
+--- a/src/displayapp/screens/Timer.h
++++ b/src/displayapp/screens/Timer.h
+@@ -36,8 +36,7 @@ namespace Pinetime::Applications::Screens {
+     lv_objmask_mask_t* highlightMask;
+ 
+     lv_task_t* taskRefresh;
+-    Widgets::Counter minuteCounter = Widgets::Counter(0, 59, jetbrains_mono_76);
+-    Widgets::Counter secondCounter = Widgets::Counter(0, 59, jetbrains_mono_76);
++    Widgets::Counter secondCounter = Widgets::Counter(0, 9999, jetbrains_mono_76, 240, 30);
+ 
+     bool buttonPressing = false;
+     int maskPosition = 0;
+diff --git a/src/displayapp/widgets/Counter.cpp b/src/displayapp/widgets/Counter.cpp
+index e95178ec..08c4d6af 100644
+--- a/src/displayapp/widgets/Counter.cpp
++++ b/src/displayapp/widgets/Counter.cpp
+@@ -28,7 +28,10 @@ namespace {
+   }
+ }
+ 
+-Counter::Counter(int min, int max, lv_font_t& font) : min {min}, max {max}, value {min}, font {font}, leadingZeroCount {digitCount(max)} {
++Counter::Counter(int min, int max, lv_font_t& font) : min {min}, max {max}, value {min}, leadingZeroCount {digitCount(max)}, font {font}, width {58}, step{1} {
++}
++
++Counter::Counter(int min, int max, lv_font_t& font, int width, int step) : min {min}, max {max}, value {min}, leadingZeroCount {digitCount(max)}, font {font}, width {width}, step{step} {
+ }
+ 
+ void Counter::UpBtnPressed() {
+@@ -44,9 +47,9 @@ void Counter::UpBtnPressed() {
+ };
+ 
+ void Counter::DownBtnPressed() {
+-  value--;
++  value -= value % step ? value % step : step;
+   if (value < min) {
+-    value = max;
++    value = max - max % step;
+   }
+   UpdateLabel();
+ 
+@@ -133,7 +136,7 @@ void Counter::Create() {
+   }
+ 
+   static constexpr uint8_t padding = 5;
+-  const uint8_t width = std::max(lv_obj_get_width(number) + padding * 2, 58);
++  const uint8_t width = std::max(lv_obj_get_width(number) + padding * 2, this->width);
+   static constexpr uint8_t btnHeight = 50;
+   const uint8_t containerHeight = btnHeight * 2 + lv_obj_get_height(number) + padding * 2;
+ 
+diff --git a/src/displayapp/widgets/Counter.h b/src/displayapp/widgets/Counter.h
+index 825860b8..6c01b275 100644
+--- a/src/displayapp/widgets/Counter.h
++++ b/src/displayapp/widgets/Counter.h
+@@ -7,6 +7,7 @@ namespace Pinetime {
+       class Counter {
+       public:
+         Counter(int min, int max, lv_font_t& font);
++        Counter(int min, int max, lv_font_t& font, int width, int step);
+ 
+         void Create();
+         void UpBtnPressed();
+@@ -41,6 +42,8 @@ namespace Pinetime {
+         int min;
+         int max;
+         int value;
++	int width;
++	int step;
+         const int leadingZeroCount;
+         bool twelveHourMode = false;
+         bool monthMode = false;
