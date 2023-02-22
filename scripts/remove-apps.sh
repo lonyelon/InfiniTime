@@ -15,4 +15,17 @@ git rm src/displayapp/screens/Paddle.h
 git rm src/displayapp/screens/Twos.cpp
 git rm src/displayapp/screens/Twos.h
 
+sed -i '/InfiniPaint.cpp/d' src/CMakeLists.txt
+sed -i '/InfiniPaint.h/d' src/CMakeLists.txt
+sed -i '/Metronome.cpp/d' src/CMakeLists.txt
+sed -i '/Metronome.h/d' src/CMakeLists.txt
+sed -i '/Motion.cpp/d' src/CMakeLists.txt
+sed -i '/Motion.h/d' src/CMakeLists.txt
+sed -i '/Navigation.cpp/d' src/CMakeLists.txt
+sed -i '/Navigation.h/d' src/CMakeLists.txt
+sed -i '/Paddle.cpp/d' src/CMakeLists.txt
+sed -i '/Paddle.h/d' src/CMakeLists.txt
+sed -i '/Twos.cpp/d' src/CMakeLists.txt
+sed -i '/Twos.h/d' src/CMakeLists.txt
+
 git apply ../patches/remove-apps.patch
