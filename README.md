@@ -12,6 +12,10 @@ Keep in mind you need to do the usual InfiniTime build configuration.
 
 These below are the patches applied to the source code.
 
+### customize-watchface
+
+Use ISO date format, force 24h clock and include a MOTD in the default "digital clock" watchface.
+
 ### clean-apps
 
 I don't use most apps included with InfiniTime, so they were removed. This change removes the entire second screen in the app menu.
