@@ -4,7 +4,7 @@ all: build
 
 build: patch
 	@echo "\033[32mBuilding source...\033[0;0m"
-	cd InfiniTime; cmake .; make
+	sh -c "./scripts/build.sh"
 	@echo "\033[32;1mEverything done.\033[0;0m"
 
 patch: checkout

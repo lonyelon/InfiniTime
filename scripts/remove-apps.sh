@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cd InfiniTime
+cd $(dirname $(dirname $(realpath $0)))/InfiniTime
 
 git rm src/displayapp/screens/InfiniPaint.cpp
 git rm src/displayapp/screens/InfiniPaint.h
