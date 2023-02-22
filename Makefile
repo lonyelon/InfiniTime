@@ -11,6 +11,7 @@ patch: checkout
 	@echo "\033[32mApplying patches to DWL...\033[0;0m"
 	sh -c "./scripts/remove-apps.sh"
 	sh -c "./scripts/sportify-timer.sh"
+	sh -c "./scripts/customize-watchface.sh"
 
 checkout: clean
 

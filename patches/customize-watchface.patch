@@ -1,0 +1,82 @@
+diff --git a/src/displayapp/screens/WatchFaceDigital.cpp b/src/displayapp/screens/WatchFaceDigital.cpp
+index 47f40dab..1512391f 100644
+--- a/src/displayapp/screens/WatchFaceDigital.cpp
++++ b/src/displayapp/screens/WatchFaceDigital.cpp
+@@ -38,10 +38,18 @@ WatchFaceDigital::WatchFaceDigital(DisplayApp* app,
+   lv_label_set_text_static(notificationIcon, NotificationIcon::GetIcon(false));
+   lv_obj_align(notificationIcon, nullptr, LV_ALIGN_IN_TOP_LEFT, 0, 0);
+ 
++  label_motd = lv_label_create(lv_scr_act(), nullptr);
++  lv_obj_align(label_motd, lv_scr_act(), LV_ALIGN_CENTER, 0, -50);
++  lv_obj_set_style_local_text_color(label_motd, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, lv_color_hex(0x999999));
++
+   label_date = lv_label_create(lv_scr_act(), nullptr);
+-  lv_obj_align(label_date, lv_scr_act(), LV_ALIGN_CENTER, 0, 60);
++  lv_obj_align(label_date, lv_scr_act(), LV_ALIGN_CENTER, 0, 50);
+   lv_obj_set_style_local_text_color(label_date, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, lv_color_hex(0x999999));
+ 
++  label_weekday = lv_label_create(lv_scr_act(), nullptr);
++  lv_obj_align(label_weekday, lv_scr_act(), LV_ALIGN_CENTER, 0, 80);
++  lv_obj_set_style_local_text_color(label_weekday, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, lv_color_hex(0x999999));
++
+   label_time = lv_label_create(lv_scr_act(), nullptr);
+   lv_obj_set_style_local_text_font(label_time, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &jetbrains_mono_extrabold_compressed);
+ 
+@@ -98,7 +106,8 @@ void WatchFaceDigital::Refresh() {
+     auto yearMonthDay = date::year_month_day(dp);
+ 
+     auto year = static_cast<int>(yearMonthDay.year());
+-    auto month = static_cast<Pinetime::Controllers::DateTime::Months>(static_cast<unsigned>(yearMonthDay.month()));
++    auto month_num = static_cast<unsigned>(yearMonthDay.month());
++    auto month = static_cast<Pinetime::Controllers::DateTime::Months>(month_num);
+     auto day = static_cast<unsigned>(yearMonthDay.day());
+     auto dayOfWeek = static_cast<Pinetime::Controllers::DateTime::Days>(date::weekday(yearMonthDay).iso_encoding());
+ 
+@@ -129,21 +138,19 @@ void WatchFaceDigital::Refresh() {
+     }
+ 
+     if ((year != currentYear) || (month != currentMonth) || (dayOfWeek != currentDayOfWeek) || (day != currentDay)) {
+-      if (settingsController.GetClockType() == Controllers::Settings::ClockType::H24) {
+-        lv_label_set_text_fmt(label_date,
+-                              "%s %d %s %d",
+-                              dateTimeController.DayOfWeekShortToString(),
+-                              day,
+-                              dateTimeController.MonthShortToString(),
+-                              year);
+-      } else {
+-        lv_label_set_text_fmt(label_date,
+-                              "%s %s %d %d",
+-                              dateTimeController.DayOfWeekShortToString(),
+-                              dateTimeController.MonthShortToString(),
+-                              day,
+-                              year);
+-      }
++      lv_label_set_text_fmt(label_motd, "Emma es preciosa");
++      lv_obj_realign(label_motd);
++
++      lv_label_set_text_fmt(label_weekday,
++                            "%s",
++                            dateTimeController.DayOfWeekShortToString());
++      lv_obj_realign(label_weekday);
++
++      lv_label_set_text_fmt(label_date,
++                            "%d-%02d-%d",
++                            year,
++                            month_num,
++                            day);
+       lv_obj_realign(label_date);
+ 
+       currentYear = year;
+diff --git a/src/displayapp/screens/WatchFaceDigital.h b/src/displayapp/screens/WatchFaceDigital.h
+index 60446afa..7a29ba6d 100644
+--- a/src/displayapp/screens/WatchFaceDigital.h
++++ b/src/displayapp/screens/WatchFaceDigital.h
+@@ -59,6 +59,8 @@ namespace Pinetime {
+         lv_obj_t* label_time;
+         lv_obj_t* label_time_ampm;
+         lv_obj_t* label_date;
++        lv_obj_t* label_weekday;
++        lv_obj_t* label_motd;
+         lv_obj_t* heartbeatIcon;
+         lv_obj_t* heartbeatValue;
+         lv_obj_t* stepIcon;
