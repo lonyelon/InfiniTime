@@ -82,10 +82,10 @@ index a6b60a17..3834e76c 100644
      bool buttonPressing = false;
      int maskPosition = 0;
 diff --git a/src/displayapp/widgets/Counter.cpp b/src/displayapp/widgets/Counter.cpp
-index e95178ec..08c4d6af 100644
+index e95178ec..4f25f327 100644
 --- a/src/displayapp/widgets/Counter.cpp
 +++ b/src/displayapp/widgets/Counter.cpp
-@@ -28,7 +28,10 @@ namespace {
+@@ -28,11 +28,14 @@ namespace {
    }
  }
  
@@ -97,6 +97,11 @@ index e95178ec..08c4d6af 100644
  }
  
  void Counter::UpBtnPressed() {
+-  value++;
++  value += step - value % step;
+   if (value > max) {
+     value = min;
+   }
 @@ -44,9 +47,9 @@ void Counter::UpBtnPressed() {
  };
  
