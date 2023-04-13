@@ -80,3 +80,92 @@ index 60446afa..7a29ba6d 100644
          lv_obj_t* heartbeatIcon;
          lv_obj_t* heartbeatValue;
          lv_obj_t* stepIcon;
+diff --git a/src/displayapp/screens/WatchFaceDigital.cpp b/src/displayapp/screens/WatchFaceDigital.cpp
+index ad35b5c9..cb5b541c 100644
+--- a/src/displayapp/screens/WatchFaceDigital.cpp
++++ b/src/displayapp/screens/WatchFaceDigital.cpp
+@@ -35,10 +35,18 @@ WatchFaceDigital::WatchFaceDigital(Controllers::DateTime& dateTimeController,
+   lv_label_set_text_static(notificationIcon, NotificationIcon::GetIcon(false));
+   lv_obj_align(notificationIcon, nullptr, LV_ALIGN_IN_TOP_LEFT, 0, 0);
+ 
++  label_motd = lv_label_create(lv_scr_act(), nullptr);
++  lv_obj_align(label_motd, lv_scr_act(), LV_ALIGN_CENTER, 0, -50);
++  lv_obj_set_style_local_text_color(label_motd, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, lv_color_hex(0x999999));
++
+   label_date = lv_label_create(lv_scr_act(), nullptr);
+-  lv_obj_align(label_date, lv_scr_act(), LV_ALIGN_CENTER, 0, 60);
++  lv_obj_align(label_date, lv_scr_act(), LV_ALIGN_CENTER, 0, 50);
+   lv_obj_set_style_local_text_color(label_date, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, lv_color_hex(0x999999));
+ 
++  label_weekday = lv_label_create(lv_scr_act(), nullptr);
++  lv_obj_align(label_weekday, lv_scr_act(), LV_ALIGN_CENTER, 0, 80);
++  lv_obj_set_style_local_text_color(label_weekday, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, lv_color_hex(0x999999));
++
+   label_time = lv_label_create(lv_scr_act(), nullptr);
+   lv_obj_set_style_local_text_font(label_time, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &jetbrains_mono_extrabold_compressed);
+ 
+@@ -91,7 +99,8 @@ void WatchFaceDigital::Refresh() {
+     auto hour = dateTimeController.Hours();
+     auto minute = dateTimeController.Minutes();
+     auto year = dateTimeController.Year();
+-    auto month = dateTimeController.Month();
++    auto month_num = static_cast<unsigned>(yearMonthDay.month());
++    auto month = static_cast<Pinetime::Controllers::DateTime::Months>(month_num);
+     auto dayOfWeek = dateTimeController.DayOfWeek();
+     auto day = dateTimeController.Day();
+ 
+@@ -119,21 +128,19 @@ void WatchFaceDigital::Refresh() {
+     }
+ 
+     if ((year != currentYear) || (month != currentMonth) || (dayOfWeek != currentDayOfWeek) || (day != currentDay)) {
+-      if (settingsController.GetClockType() == Controllers::Settings::ClockType::H24) {
+-        lv_label_set_text_fmt(label_date,
+-                              "%s %d %s %d",
+-                              dateTimeController.DayOfWeekShortToString(),
+-                              day,
+-                              dateTimeController.MonthShortToString(),
+-                              year);
+-      } else {
+-        lv_label_set_text_fmt(label_date,
+-                              "%s %s %d %d",
+-                              dateTimeController.DayOfWeekShortToString(),
+-                              dateTimeController.MonthShortToString(),
+-                              day,
+-                              year);
+-      }
++      lv_label_set_text_fmt(label_motd, "Emma es preciosa");
++      lv_obj_realign(label_motd);
++
++      lv_label_set_text_fmt(label_weekday,
++                            "%s",
++                            dateTimeController.DayOfWeekShortToString());
++      lv_obj_realign(label_weekday);
++
++      lv_label_set_text_fmt(label_date,
++                            "%d-%02d-%d",
++                            year,
++                            month_num,
++                            day);
+       lv_obj_realign(label_date);
+ 
+       currentYear = year;
+diff --git a/src/displayapp/screens/WatchFaceDigital.h b/src/displayapp/screens/WatchFaceDigital.h
+index a51c24e4..3a799b42 100644
+--- a/src/displayapp/screens/WatchFaceDigital.h
++++ b/src/displayapp/screens/WatchFaceDigital.h
+@@ -59,6 +59,8 @@ namespace Pinetime {
+         lv_obj_t* label_time;
+         lv_obj_t* label_time_ampm;
+         lv_obj_t* label_date;
++        lv_obj_t* label_weekday;
++        lv_obj_t* label_motd;
+         lv_obj_t* heartbeatIcon;
+         lv_obj_t* heartbeatValue;
+         lv_obj_t* stepIcon;
+diff --git a/src/libs/QCBOR b/src/libs/QCBOR
+index 56b17bf9..9e2f7080 160000
+--- a/src/libs/QCBOR
++++ b/src/libs/QCBOR
+@@ -1 +1 @@
+-Subproject commit 56b17bf9f74096774944bcac0829adcd887d391e
++Subproject commit 9e2f70804393823cc6d16f9f1035ef7223faca04

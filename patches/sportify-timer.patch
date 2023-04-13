@@ -144,3 +144,164 @@ index 825860b8..6c01b275 100644
          const int leadingZeroCount;
          bool twelveHourMode = false;
          bool monthMode = false;
+diff --git a/src/displayapp/screens/Timer.cpp b/src/displayapp/screens/Timer.cpp
+index df78a5a0..da21e639 100644
+--- a/src/displayapp/screens/Timer.cpp
++++ b/src/displayapp/screens/Timer.cpp
+@@ -1,7 +1,6 @@
+ #include "displayapp/screens/Timer.h"
+ #include "displayapp/screens/Screen.h"
+ #include "displayapp/screens/Symbols.h"
+-#include "displayapp/InfiniTimeTheme.h"
+ #include <lvgl/lvgl.h>
+ 
+ using namespace Pinetime::Applications::Screens;
+@@ -19,16 +18,8 @@ static void btnEventHandler(lv_obj_t* obj, lv_event_t event) {
+ 
+ Timer::Timer(Controllers::TimerController& timerController) : timerController {timerController} {
+ 
+-  lv_obj_t* colonLabel = lv_label_create(lv_scr_act(), nullptr);
+-  lv_obj_set_style_local_text_font(colonLabel, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &jetbrains_mono_76);
+-  lv_obj_set_style_local_text_color(colonLabel, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+-  lv_label_set_text_static(colonLabel, ":");
+-  lv_obj_align(colonLabel, lv_scr_act(), LV_ALIGN_CENTER, 0, -29);
+-
+-  minuteCounter.Create();
+   secondCounter.Create();
+-  lv_obj_align(minuteCounter.GetObject(), nullptr, LV_ALIGN_IN_TOP_LEFT, 0, 0);
+-  lv_obj_align(secondCounter.GetObject(), nullptr, LV_ALIGN_IN_TOP_RIGHT, 0, 0);
++  lv_obj_align(secondCounter.GetObject(), nullptr, LV_ALIGN_IN_TOP_LEFT, 0, 0);
+ 
+   highlightObjectMask = lv_objmask_create(lv_scr_act(), nullptr);
+   lv_obj_set_size(highlightObjectMask, 240, 50);
+@@ -105,8 +96,7 @@ void Timer::UpdateMask() {
+ void Timer::Refresh() {
+   if (timerController.IsRunning()) {
+     auto secondsRemaining = std::chrono::duration_cast<std::chrono::seconds>(timerController.GetTimeRemaining());
+-    minuteCounter.SetValue(secondsRemaining.count() / 60);
+-    secondCounter.SetValue(secondsRemaining.count() % 60);
++    secondCounter.SetValue(secondsRemaining);
+   } else if (buttonPressing && xTaskGetTickCount() > pressTime + pdMS_TO_TICKS(150)) {
+     lv_label_set_text_static(txtPlayPause, "Reset");
+     maskPosition += 15;
+@@ -120,13 +110,11 @@ void Timer::Refresh() {
+ }
+ 
+ void Timer::SetTimerRunning() {
+-  minuteCounter.HideControls();
+   secondCounter.HideControls();
+   lv_label_set_text_static(txtPlayPause, "Pause");
+ }
+ 
+ void Timer::SetTimerStopped() {
+-  minuteCounter.ShowControls();
+   secondCounter.ShowControls();
+   lv_label_set_text_static(txtPlayPause, "Start");
+ }
+@@ -134,20 +122,17 @@ void Timer::SetTimerStopped() {
+ void Timer::ToggleRunning() {
+   if (timerController.IsRunning()) {
+     auto secondsRemaining = std::chrono::duration_cast<std::chrono::seconds>(timerController.GetTimeRemaining());
+-    minuteCounter.SetValue(secondsRemaining.count() / 60);
+-    secondCounter.SetValue(secondsRemaining.count() % 60);
++    secondCounter.SetValue(secondsRemaining);
+     timerController.StopTimer();
+     SetTimerStopped();
+-  } else if (secondCounter.GetValue() + minuteCounter.GetValue() > 0) {
+-    auto timerDuration = std::chrono::minutes(minuteCounter.GetValue()) + std::chrono::seconds(secondCounter.GetValue());
+-    timerController.StartTimer(timerDuration);
++  } else if (secondCounter.GetValue() > 0) {
++    timerController.StartTimer(secondCounter.GetValue() * 1000);
+     Refresh();
+     SetTimerRunning();
+   }
+ }
+ 
+ void Timer::Reset() {
+-  minuteCounter.SetValue(0);
+   secondCounter.SetValue(0);
+   SetTimerStopped();
+ }
+diff --git a/src/displayapp/screens/Timer.h b/src/displayapp/screens/Timer.h
+index a6e26063..926efb56 100644
+--- a/src/displayapp/screens/Timer.h
++++ b/src/displayapp/screens/Timer.h
+@@ -35,8 +35,7 @@ namespace Pinetime::Applications::Screens {
+     lv_objmask_mask_t* highlightMask;
+ 
+     lv_task_t* taskRefresh;
+-    Widgets::Counter minuteCounter = Widgets::Counter(0, 59, jetbrains_mono_76);
+-    Widgets::Counter secondCounter = Widgets::Counter(0, 59, jetbrains_mono_76);
++    Widgets::Counter secondCounter = Widgets::Counter(0, 9999, jetbrains_mono_76, 240, 30);
+ 
+     bool buttonPressing = false;
+     lv_coord_t maskPosition = 0;
+diff --git a/src/displayapp/widgets/Counter.cpp b/src/displayapp/widgets/Counter.cpp
+index b486e372..74d18518 100644
+--- a/src/displayapp/widgets/Counter.cpp
++++ b/src/displayapp/widgets/Counter.cpp
+@@ -29,11 +29,13 @@ namespace {
+   }
+ }
+ 
+-Counter::Counter(int min, int max, lv_font_t& font) : min {min}, max {max}, value {min}, leadingZeroCount {digitCount(max)}, font {font} {
++Counter::Counter(int min, int max, lv_font_t& font) : min {min}, max {max}, value {min}, leadingZeroCount {digitCount(max)}, font {font}, width {58}, step{1} {
+ }
+ 
++Counter::Counter(int min, int max, lv_font_t& font, int width, int step) : min {min}, max {max}, value {min}, leadingZeroCount {digitCount(max)}, font {font}, width {width}, step{step} {
++
+ void Counter::UpBtnPressed() {
+-  value++;
++  value += step - value % step;
+   if (value > max) {
+     value = min;
+   }
+@@ -45,9 +47,9 @@ void Counter::UpBtnPressed() {
+ };
+ 
+ void Counter::DownBtnPressed() {
+-  value--;
++  value -= value % step ? value % step : step;
+   if (value < min) {
+-    value = max;
++    value = max - max % step;
+   }
+   UpdateLabel();
+ 
+@@ -135,7 +137,7 @@ void Counter::Create() {
+   }
+ 
+   static constexpr uint8_t padding = 5;
+-  const uint8_t width = std::max(lv_obj_get_width(number) + padding * 2, 58);
++  const uint8_t width = std::max(lv_obj_get_width(number) + padding * 2, this->width);
+   static constexpr uint8_t btnHeight = 50;
+   const uint8_t containerHeight = btnHeight * 2 + lv_obj_get_height(number) + padding * 2;
+ 
+diff --git a/src/displayapp/widgets/Counter.h b/src/displayapp/widgets/Counter.h
+index 825860b8..48ee84e6 100644
+--- a/src/displayapp/widgets/Counter.h
++++ b/src/displayapp/widgets/Counter.h
+@@ -7,6 +7,7 @@ namespace Pinetime {
+       class Counter {
+       public:
+         Counter(int min, int max, lv_font_t& font);
++        Counter(int min, int max, lv_font_t& font, int width, int step);
+ 
+         void Create();
+         void UpBtnPressed();
+@@ -41,6 +42,8 @@ namespace Pinetime {
+         int min;
+         int max;
+         int value;
++        int width;
++	int step;
+         const int leadingZeroCount;
+         bool twelveHourMode = false;
+         bool monthMode = false;
+diff --git a/src/libs/QCBOR b/src/libs/QCBOR
+index 56b17bf9..9e2f7080 160000
+--- a/src/libs/QCBOR
++++ b/src/libs/QCBOR
+@@ -1 +1 @@
+-Subproject commit 56b17bf9f74096774944bcac0829adcd887d391e
++Subproject commit 9e2f70804393823cc6d16f9f1035ef7223faca04
